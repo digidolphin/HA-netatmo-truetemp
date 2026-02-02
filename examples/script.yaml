@@ -1,0 +1,64 @@
+alias: TrueTemp adjust (generic)
+mode: queued
+max: 5
+sequence:
+  - variables:
+      room_name: "{{ room_name }}"
+      climate_entity: "{{ climate_entity }}"
+      ref_entity: "{{ ref_entity }}"
+      window_entity: "{{ window_entity }}"
+      lock_entity: "{{ lock_entity }}"
+      now_ts: "{{ as_timestamp(now()) }}"
+      lock_ts: >-
+        {{ as_timestamp(states(lock_entity)) if states(lock_entity) not in
+        ['unknown','unavailable','none',''] else 0 }}
+      window_open: "{{ is_state(window_entity, 'on') }}"
+      setpoint: "{{ state_attr(climate_entity, 'temperature') | float(0) }}"
+      t_ref: "{{ states(ref_entity) | float(none) }}"
+      t_valve: "{{ state_attr(climate_entity, 'current_temperature') | float(none) }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ window_open }}"
+        sequence:
+          - stop: Window open
+      - conditions:
+          - condition: template
+            value_template: "{{ lock_ts > now_ts }}"
+        sequence:
+          - stop: Cooldown active
+      - conditions:
+          - condition: template
+            value_template: "{{ setpoint < 20 }}"
+        sequence:
+          - stop: Setpoint < 20
+      - conditions:
+          - condition: template
+            value_template: "{{ t_ref is none or t_valve is none }}"
+        sequence:
+          - stop: Missing temperature
+  - variables:
+      absdiff: "{{ (t_ref - t_valve) | abs }}"
+      t_set: >-
+        {% set lo = t_valve - 1.0 %} {% set hi = t_valve + 1.0 %} {% if t_ref <
+        lo %}{{ lo }} {% elif t_ref > hi %}{{ hi }} {% else %}{{ t_ref }} {%
+        endif %}
+      t_set_r: "{{ (t_set * 10) | round(0) / 10 }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ absdiff < 0.5 }}"
+        sequence:
+          - stop: Diff < 0.5
+  - continue_on_error: true
+    action: rest_command.netatmo_truetemp_set
+    data:
+      room_name: "{{ room_name }}"
+      temperature: "{{ t_set_r }}"
+  - action: input_datetime.set_datetime
+    data:
+      entity_id: "{{ lock_entity }}"
+      datetime: "{{ (now() + timedelta(minutes=30)).strftime('%Y-%m-%d %H:%M:%S') }}"
+description: ""
+trace:
+  stored_traces: 50
