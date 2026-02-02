@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.env
+.DS_Store
+
+# Home Assistant add-on runtime data
+data/
