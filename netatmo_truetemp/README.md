@@ -16,7 +16,7 @@ Designed for local use (Node-RED, automations).
 ## Home Assistant automation example (optional)
 
 This add-on only exposes a local HTTP API. If you want automatic correction of Netatmo “True Temperature”
-based on a reference temperature sensor, you can implement it in Home Assistant.
+based on a reference temperature sensor, you can implement it in Home Assistant. See automation and script examples in Examples folder
 
 ### Concept
 For each room we define 3 template triggers:
@@ -46,17 +46,17 @@ rest_command:
     payload: >
       {"room_name":"{{ room_name }}","temperature":{{ temperature }}}
     timeout: 15
+```
 
 
-
-Example service call:
+### Example service call:
 action: rest_command.netatmo_truetemp_set
 data:
   room_name: "Living Room"
   temperature: 20.4
 
 
-## Node-RED example
+### Node-RED example
 
 Use an HTTP Request node:
 
