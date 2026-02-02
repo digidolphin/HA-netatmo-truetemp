@@ -1,7 +1,7 @@
 name: "Netatmo TrueTemp API"
 slug: "netatmo_truetemp"
 description: "HTTP wrapper for py-netatmo-truetemp-cli"
-version: "0.1.1"
+version: "0.1.2"
 
 arch:
   - aarch64
